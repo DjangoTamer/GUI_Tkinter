@@ -1,4 +1,6 @@
 import tkinter as tk
+from bs4 import BeautifulSoup
+import requests
 import random
 import time
 
@@ -157,7 +159,8 @@ class Clicker(tk.Toplevel):
     def game_over(self):
         self.end_time = time.time()
         self.clear()
-        self.label_game_over['text'] = f'''GAME OVER\n\nPoints: {self.points}\nLevel: {round(self.points // 5)}\nTime: {round(self.end_time - self.start_time, 3)} sec'''
+        self.label_game_over[
+            'text'] = f'''GAME OVER\n\nPoints: {self.points}\nLevel: {round(self.points // 5)}\nTime: {round(self.end_time - self.start_time, 3)} sec'''
         self.label_game_over.place(x=0, y=0, width=500, height=500)
 
     def clear(self):
@@ -169,9 +172,50 @@ class Parser(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title('Парсер')
-        self.geometry('500x500+500+300')
+        self.geometry('800x600+500+300')
         self.resizable(False, False)
-        self.config()
+        self.config(bg=color_bg)
+
+        self.button_start = tk.Button(self,
+                                      text="Let's start",
+                                      font=('Arial', 15, 'bold'),
+                                      bg=color_element,
+                                      fg=color_text,
+                                      command=self.get_fact
+                                      )
+        self.button_copy = tk.Button(self,
+                                      text="Copy",
+                                      font=('Arial', 15, 'bold'),
+                                      bg=color_element,
+                                      fg=color_text,
+                                      command=self.get_fact
+                                      )
+
+        self.text = tk.Text(self,
+                            width=50,
+                            height=10,
+                            font=('Arial', 12),
+                            wrap='word'
+                            )
+
+        self.scrollbar = tk.Scrollbar(self, command=self.text.yview)
+        self.button_start.pack()
+
+
+    def get_fact(self):
+        website = 'https://facts.museum/random'
+        response = requests.get(website)
+        fact_page = BeautifulSoup(response.content, 'html.parser')
+        print('Заголовок', fact_page.h2.text)
+        print('Текст', fact_page.find('p', class_='content').text)
+        print('Фото', r'https://facts.museum/img/facts/' + response.url.split('/')[-1] + '.jpg')
+
+        self.button_start['text'] = 'Next fact'
+        self.button_copy.pack()
+        self.text.insert(1.0, fact_page.find('p', class_='content').text)
+        self.text.pack()
+        self.scrollbar.pack()
+
 
 
 if __name__ == '__main__':
