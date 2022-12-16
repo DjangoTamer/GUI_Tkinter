@@ -1,8 +1,10 @@
 import tkinter as tk
+
 from bs4 import BeautifulSoup
 import requests
 import random
 import time
+from PIL import Image, ImageTk
 
 color_bg = '#909090'
 color_text = '#E0E0E0'
@@ -18,15 +20,16 @@ class MainWin(tk.Tk):
         dh = round((self.winfo_screenheight() - h) / 2)
         icon = tk.PhotoImage(file='img/star_2.png')
         self.iconphoto(False, icon)
-        self.title('Главное окно')
+        self.title('Main menu')
         self.geometry(f'{w}x{h}+{dw}+{dh}')  # widthxheight+dx+dy
         self.resizable(True, False)
         self.minsize(200, 200)
         self.maxsize(1000, 1000)
         self.config(bg=color_bg)
 
+
         button1 = tk.Button(self,
-                            text='Кликер',
+                            text='Clicker',
                             font=('Arial', 15, 'bold'),
                             bg=color_element,
                             fg=color_text,
@@ -34,7 +37,7 @@ class MainWin(tk.Tk):
                             command=lambda: Clicker(self),
                             )
         button2 = tk.Button(self,
-                            text='Парсер',
+                            text='Parser',
                             font=('Arial', 15, 'bold'),
                             bg=color_element,
                             fg=color_text,
@@ -171,50 +174,89 @@ class Clicker(tk.Toplevel):
 class Parser(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
-        self.title('Парсер')
+        self.title('Parser')
         self.geometry('800x600+500+300')
-        self.resizable(False, False)
         self.config(bg=color_bg)
 
-        self.button_start = tk.Button(self,
+        self.website = 'https://facts.museum/random'
+
+        self.frame1 = tk.Frame(self, height=300, bg=color_bg)
+        self.frame2 = tk.Frame(self)
+
+        self.button_start = tk.Button(self.frame1,
                                       text="Let's start",
                                       font=('Arial', 15, 'bold'),
                                       bg=color_element,
                                       fg=color_text,
-                                      command=self.get_fact
-                                      )
-        self.button_copy = tk.Button(self,
-                                      text="Copy",
-                                      font=('Arial', 15, 'bold'),
-                                      bg=color_element,
-                                      fg=color_text,
-                                      command=self.get_fact
+                                      command=self.start
                                       )
 
-        self.text = tk.Text(self,
-                            width=50,
-                            height=10,
+        self.button_get_fact = tk.Button(self.frame1,
+                                         text="Next fact",
+                                         font=('Arial', 15, 'bold'),
+                                         bg=color_element,
+                                         fg=color_text,
+                                         command=self.get_fact
+                                         )
+        self.button_copy = tk.Button(self.frame1,
+                                     text="Copy",
+                                     font=('Arial', 15, 'bold'),
+                                     bg=color_element,
+                                     fg=color_text,
+                                     command=self.copy_text
+                                     )
+        self.label_photo = tk.Label(self.frame2, width=300, height=300)
+        self.text = tk.Text(self.frame2,
+                            width=40,
+                            height=20,
                             font=('Arial', 12),
-                            wrap='word'
+                            wrap='word',
                             )
 
-        self.scrollbar = tk.Scrollbar(self, command=self.text.yview)
-        self.button_start.pack()
+        self.scrollbar = tk.Scrollbar(self.frame2, command=self.text.yview)
 
+        self.frame1.pack()
+        self.frame2.pack()
+        self.button_start.pack(side='left', padx=10, pady=10)
+
+
+
+    def start(self):
+
+        self.button_start.destroy()
+        self.get_fact()
 
     def get_fact(self):
-        website = 'https://facts.museum/random'
-        response = requests.get(website)
+        response = requests.get(self.website)
         fact_page = BeautifulSoup(response.content, 'html.parser')
+        fact_image_url = r'https://facts.museum/img/facts/' + response.url.split('/')[-1] + '.jpg'
         print('Заголовок', fact_page.h2.text)
         print('Текст', fact_page.find('p', class_='content').text)
-        print('Фото', r'https://facts.museum/img/facts/' + response.url.split('/')[-1] + '.jpg')
+        print('Фото', fact_image_url)
 
-        self.button_start['text'] = 'Next fact'
-        self.button_copy.pack()
+        self.button_get_fact.pack(side='left', padx=10, pady=10)
+        self.button_copy.pack(side='left', padx=10, pady=10)
+
+        self.image = Image.open(requests.get(fact_image_url, stream=True).raw)
+        self.image_tk = ImageTk.PhotoImage(self.image)
+        self.label_photo['image'] = self.image_tk
+        self.label_photo.image_ref = self.image_tk
+        self.label_photo.pack(side='left')
+
         self.text.insert(1.0, fact_page.find('p', class_='content').text)
-        self.text.pack()
-        self.scrollbar.pack()
+        self.text.pack(side='left')
+        self.scrollbar.pack(side='left', fill='y')
+
+
+        # self.canvas = tk.Canvas(self, height=400, width=700)
+        # self.image = self.canvas.create_image(0, 0, anchor='nw', image=self.image_tk)
+        # self.canvas.pack()
+
+    def copy_text(self):
+        pass
+
+
+
 
 
 
@@ -245,3 +287,19 @@ if __name__ == '__main__':
 # 606060 элемент
 # 404040
 # 000000
+
+
+
+# pack()
+# side = TOP, BOTTOM, LEFT, RIGHT
+# fill = NONE,  BOTH, X, Y  # заполнение
+# expand = 0, 1  # действия при расширении окна
+# anchor
+# padx, pady
+# ipad
+
+
+#####################################
+# увеличить ширину frame
+#
+#
