@@ -220,13 +220,15 @@ class Parser(tk.Toplevel):
         self.button_start.pack(side='left', padx=10, pady=10)
 
 
-
     def start(self):
-
         self.button_start.destroy()
+        self.button_get_fact.pack(side='left', padx=10, pady=10)
+        self.button_copy.pack(side='left', padx=10, pady=10)
         self.get_fact()
 
     def get_fact(self):
+        self.text.delete(1.0, 'end')  # 'end' == tk.END
+
         response = requests.get(self.website)
         fact_page = BeautifulSoup(response.content, 'html.parser')
         fact_image_url = r'https://facts.museum/img/facts/' + response.url.split('/')[-1] + '.jpg'
@@ -234,8 +236,6 @@ class Parser(tk.Toplevel):
         print('Текст', fact_page.find('p', class_='content').text)
         print('Фото', fact_image_url)
 
-        self.button_get_fact.pack(side='left', padx=10, pady=10)
-        self.button_copy.pack(side='left', padx=10, pady=10)
 
         self.image = Image.open(requests.get(fact_image_url, stream=True).raw)
         self.image_tk = ImageTk.PhotoImage(self.image)
@@ -243,9 +243,17 @@ class Parser(tk.Toplevel):
         self.label_photo.image_ref = self.image_tk
         self.label_photo.pack(side='left')
 
-        self.text.insert(1.0, fact_page.find('p', class_='content').text)
+        self.text.insert(1.0, fact_page.h2.text + '\n')
+        # self.text.insert(2.0, '\n' + fact_page.find('p', class_='content').text)  # 1.0 - номер_строки.номер_символа
+        self.text.insert(2.0, fact_page.find('p', class_='content').text)  # 1.0 - номер_строки.номер_символа
+        self.text.tag_add('header', 1.0, '1.end')
+        self.text.tag_add('text', 2.0, '2.end')
+        self.text.tag_config('header', font=('Arial', 14, 'bold'), justify='center', lmargin1=10, rmargin=10, spacing1=10)
+        self.text.tag_config('text', font=('Arial', 12), lmargin1=20, lmargin2=20, rmargin=20, spacing1=10, wrap='word')
         self.text.pack(side='left')
+
         self.scrollbar.pack(side='left', fill='y')
+        self.text.config(yscrollcommand=self.scrollbar.set)
 
 
         # self.canvas = tk.Canvas(self, height=400, width=700)
